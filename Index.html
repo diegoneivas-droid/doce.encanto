@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doce Encanto - Gestão de Vendas & Precificação</title>
+    <!-- Tailwind CSS para design de alta qualidade -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter e Playfair Display para confeitaria sofisticada -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            300: '#fda4af',
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                            premium: '#4c1d95',
+                            gold: '#d97706'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Barra de rolagem personalizada */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Área mínima de clique/toque */
+        button, select, input {
+            min-height: 42px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Banner de Alerta para arquivos abertos localmente no celular (sem servidor web) -->
+    <div id="localFileWarning" class="hidden bg-amber-500 text-white px-4 py-2.5 text-center text-xs font-semibold shadow-inner flex items-center justify-center space-x-2">
+        <i class="fa-solid fa-circle-exclamation text-lg animate-bounce"></i>
+        <span><strong>Aviso importante:</strong> Você abriu o arquivo localmente. Para a sincronização em nuvem funcionar no celular, você precisa colocar o app na internet (veja o Guia de Configuração).</span>
+    </div>
+
+    <!-- Cabeçalho -->
+    <header class="bg-white border-b border-rose-100 shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-brand-400 to-rose-300 flex items-center justify-center shadow-md shadow-rose-200">
+                        <i class="fa-solid fa-cookie-bite text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-serif font-bold text-brand-700 tracking-wide">Doce Encanto</h1>
+                        <p class="text-xs text-slate-400 tracking-wider uppercase font-medium">Gestão & Precificação</p>
+                    </div>
+                </div>
+
+                <!-- Status de Conexão -->
+                <div class="flex items-center space-x-3">
+                    <div id="connectionStatus" class="flex items-center bg-slate-100 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600 shadow-sm border border-slate-200">
+                        <span class="w-2.5 h-2.5 bg-slate-400 rounded-full mr-2 animate-pulse" id="statusDot"></span>
+                        <span id="statusText">Modo Local</span>
+                    </div>
+                    <div class="hidden sm:flex items-center text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full text-xs font-semibold border border-emerald-200">
+                        <i class="fa-solid fa-circle-check mr-1.5"></i>
+                        <span>Autosalvamento</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Abas de Navegação -->
+        <div class="bg-rose-50/50 border-t border-rose-100/50">
+            <div class="max-w-7xl mx-auto px-4 overflow-x-auto">
+                <nav class="flex space-x-2 sm:space-x-4 py-2" aria-label="Tabs" id="mainTabs">
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium text-brand-700 bg-white shadow-sm border border-rose-100 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-line text-brand-500"></i>
+                        <span>Painel</span>
+                    </button>
+                    <button onclick="switchTab('vendas')" id="tab-vendas" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-rose-50 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-cash-register text-slate-400"></i>
+                        <span>Registrar Venda</span>
+                    </button>
+                    <button onclick="switchTab('produtos')" id="tab-produtos" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-rose-50 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-boxes-stacked text-slate-400"></i>
+                        <span>Produtos & Custos</span>
+                    </button>
+                    <button onclick="switchTab('historico')" id="tab-historico" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-rose-50 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-file-invoice-dollar text-slate-400"></i>
+                        <span>Histórico</span>
+                    </button>
+                    <button onclick="switchTab('configuracoes')" id="tab-configuracoes" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-rose-50 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-cloud-gear text-slate-400"></i>
+                        <span>Configurações</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Área de Conteúdo Principal -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Aba: PAINEL / DASHBOARD -->
+        <section id="content-dashboard" class="space-y-6">
+            <!-- Cards de Métricas -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Faturamento -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Faturamento</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="dashFaturamento">R$ 0,00</h3>
+                        <p class="text-[11px] text-slate-400">Total bruto arrecadado</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500">
+                        <i class="fa-solid fa-hand-holding-dollar text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Custo Total -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Custos Totais</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="dashCustos">R$ 0,00</h3>
+                        <p class="text-[11px] text-slate-400">Insumos + taxas cobradas</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                        <i class="fa-solid fa-calculator text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Lucro Líquido -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lucro Líquido</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="dashLucro">R$ 0,00</h3>
+                        <p class="text-[11px] text-slate-400">Lucro real em carteira</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                        <i class="fa-solid fa-wallet text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Margem Média -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Margem de Lucro Média</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="dashMargem">0.0%</h3>
+                        <p class="text-[11px] text-slate-400">Rentabilidade média</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <i class="fa-solid fa-percent text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divisão de Layout do Painel -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Alertas de Estoque & Mais Vendidos -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Alertas de Estoque -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-serif font-bold text-lg text-slate-800">Alertas de Estoque Crítico</h4>
+                            <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold" id="criticalStockCount">0 produtos</span>
+                        </div>
+                        <div class="divide-y divide-slate-100 max-h-60 overflow-y-auto pr-1" id="criticalStockContainer">
+                            <div class="py-3 text-center text-slate-400 text-sm">Nenhum produto com estoque crítico no momento.</div>
+                        </div>
+                    </div>
+
+                    <!-- Mais Vendidos -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                        <h4 class="font-serif font-bold text-lg text-slate-800">Principais Produtos Vendidos</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-500">
+                                <thead class="text-xs uppercase text-slate-400 border-b border-slate-100">
+                                    <tr>
+                                        <th scope="col" class="py-3 px-2">Produto</th>
+                                        <th scope="col" class="py-3 px-2 text-center">Vendas</th>
+                                        <th scope="col" class="py-3 px-2 text-right">Margem</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topSellingContainer" class="divide-y divide-slate-50">
+                                    <tr>
+                                        <td colspan="3" class="py-4 text-center text-slate-400">Aguardando as primeiras vendas.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ações Rápidas -->
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-br from-brand-600 to-rose-500 text-white p-6 rounded-2xl shadow-md space-y-4 flex flex-col justify-between h-full min-h-[300px]">
+                        <div class="space-y-2">
+                            <h4 class="font-serif font-bold text-xl">Doce Encanto Cloud</h4>
+                            <p class="text-sm opacity-90 leading-relaxed">Seu estoque está sincronizado em tempo real com todos os celulares e computadores da confeitaria conectados.</p>
+                        </div>
+                        <button onclick="switchTab('configuracoes')" class="bg-white text-brand-700 hover:bg-rose-50 font-semibold text-sm py-3 px-4 rounded-xl shadow-sm transition-all text-center w-full block">
+                            <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Configurações de Nuvem
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Aba: REGISTRAR VENDA -->
+        <section id="content-vendas" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Filtros e Busca de Produtos -->
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <div class="relative flex-grow">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="salesSearchInput" oninput="renderSalesProductGrid()" placeholder="Buscar produto..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-400 focus:outline-none text-sm transition-all">
+                        </div>
+                        <select id="salesFilterType" onchange="renderSalesProductGrid()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                            <option value="todos">Todos os Tipos</option>
+                            <option value="revenda">Revenda</option>
+                            <option value="producao">Fabricação Própria</option>
+                        </select>
+                    </div>
+
+                    <!-- Grid de Vendas -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto pr-1" id="salesProductGrid">
+                        <!-- Conteúdo carregado dinamicamente -->
+                    </div>
+                </div>
+
+                <!-- Carrinho de Compras -->
+                <div class="lg:col-span-5">
+                    <div class="bg-white border border-rose-100 rounded-2xl shadow-sm p-5 space-y-5 flex flex-col h-full min-h-[500px]">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h4 class="font-serif font-bold text-lg text-slate-800">Cesta de Compras</h4>
+                            <button onclick="clearCart()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold flex items-center space-x-1">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span>Limpar</span>
+                            </button>
+                        </div>
+
+                        <!-- Itens do Carrinho -->
+                        <div class="flex-grow overflow-y-auto space-y-3 max-h-[300px] pr-1" id="cartItemsContainer">
+                            <div class="text-center py-12 text-slate-400 space-y-2">
+                                <i class="fa-solid fa-basket-shopping text-3xl opacity-50 block"></i>
+                                <p class="text-sm">Selecione produtos ao lado para iniciar a venda.</p>
+                            </div>
+                        </div>
+
+                        <!-- Margem Estimada da Venda -->
+                        <div class="bg-slate-50 p-4 rounded-xl space-y-2 border border-slate-100 text-xs text-slate-600">
+                            <div class="flex justify-between font-semibold">
+                                <span>Margem Estimada Desta Venda:</span>
+                                <span id="cartEstimatedMargin" class="text-slate-500">0.0%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Custo Base do Pedido:</span>
+                                <span id="cartTotalCost">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Lucro Líquido Estimado:</span>
+                                <span id="cartTotalProfit" class="font-bold text-emerald-600">R$ 0,00</span>
+                            </div>
+                        </div>
+
+                        <!-- Pagamento e Finalização -->
+                        <div class="space-y-3 pt-3 border-t border-slate-100">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Forma de Pagamento</label>
+                                <select id="cartPaymentMethod" onchange="recalculateCartTaxes()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                                    <option value="Pix" data-tax="0">Pix (Taxa: 0%)</option>
+                                    <option value="Dinheiro" data-tax="0">Dinheiro (Taxa: 0%)</option>
+                                    <option value="Débito" data-tax="1.9">Cartão Débito (Taxa: 1.9%)</option>
+                                    <option value="Crédito" data-tax="3.5">Cartão Crédito (Taxa: 3.5%)</option>
+                                </select>
+                            </div>
+
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-sm font-semibold text-slate-500">Total a Pagar:</span>
+                                <span class="text-2xl font-black text-brand-600" id="cartTotalPayable">R$ 0,00</span>
+                            </div>
+
+                            <button onclick="checkoutSale()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>Finalizar Venda</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Aba: PRODUTOS & CUSTOS -->
+        <section id="content-produtos" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="font-serif font-bold text-2xl text-slate-800">Catálogo de Produtos</h2>
+                    <p class="text-sm text-slate-400">Cadastre e edite os preços, custos de produção e controle suas margens de lucro.</p>
+                </div>
+                <button onclick="openProductModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-md transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Novo Produto</span>
+                </button>
+            </div>
+
+            <!-- Tabela de Produtos -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50/70 border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase">
+                            <tr>
+                                <th scope="col" class="py-4 px-6">Nome do Produto</th>
+                                <th scope="col" class="py-4 px-4 text-center">Tipo</th>
+                                <th scope="col" class="py-4 px-4 text-right">Estoque</th>
+                                <th scope="col" class="py-4 px-4 text-right">Custo Total</th>
+                                <th scope="col" class="py-4 px-4 text-right">Preço de Venda</th>
+                                <th scope="col" class="py-4 px-4 text-center">Margem</th>
+                                <th scope="col" class="py-4 px-6 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTableBody" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="7" class="py-8 text-center text-slate-400">
+                                    <i class="fa-solid fa-cookie text-3xl opacity-40 mb-2 block"></i>
+                                    Nenhum produto cadastrado. Clique em "Novo Produto" para cadastrar seu primeiro doce!
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Aba: HISTÓRICO DE VENDAS -->
+        <section id="content-historico" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="font-serif font-bold text-2xl text-slate-800">Histórico de Transações</h2>
+                    <p class="text-sm text-slate-400">Gerenciamento de registros de vendas passadas e lucros obtidos.</p>
+                </div>
+                <button onclick="confirmClearSalesHistory()" class="text-xs text-rose-500 hover:text-rose-700 font-bold border border-rose-200 bg-rose-50/50 hover:bg-rose-50 py-2 px-3 rounded-lg transition-all flex items-center space-x-1">
+                    <i class="fa-solid fa-circle-minus"></i>
+                    <span>Limpar Histórico</span>
+                </button>
+            </div>
+
+            <!-- Tabela/Painel de Histórico -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden" id="salesHistoryContainer">
+                <div class="p-8 text-center text-slate-400">
+                    <i class="fa-solid fa-file-excel text-3xl opacity-40 mb-2 block"></i>
+                    Nenhuma venda realizada. Registre uma venda no menu "Registrar Venda".
+                </div>
+            </div>
+        </section>
+
+        <!-- Aba: CONFIGURAÇÕES -->
+        <section id="content-configuracoes" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Backup e Segurança -->
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                        <h3 class="font-serif font-bold text-lg text-slate-800">Segurança de Dados</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">Exporte um backup dos seus dados locais para não os perder no caso de limpeza do navegador.</p>
+                        <div class="space-y-2 pt-2">
+                            <button onclick="exportDataBackup()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-xl text-sm transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-download"></i>
+                                <span>Exportar Backup</span>
+                            </button>
+                            <label class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-xl text-sm transition-all flex items-center justify-center space-x-2 cursor-pointer text-center">
+                                <i class="fa-solid fa-upload"></i>
+                                <span>Importar Backup</span>
+                                <input type="file" id="importFileInput" onchange="importDataBackup(event)" class="hidden">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuração de Conexão Firebase -->
+                <div class="lg:col-span-8">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
+                        <div>
+                            <h3 class="font-serif font-bold text-lg text-slate-800">Sincronização em Nuvem (Google Firebase)</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">Sua conexão com o banco de dados online da sua loja está ativa e configurada no código.</p>
+                        </div>
+
+                        <form id="firebaseSettingsForm" onsubmit="saveFirebaseSettings(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Status de Rede</label>
+                                <div class="bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center justify-between text-xs font-semibold">
+                                    <span id="firebaseStatusText" class="text-slate-500">Desconectado</span>
+                                    <button type="button" onclick="testFirebaseConnection()" class="text-brand-600 hover:text-brand-700">Testar Conexão</button>
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">API Key</label>
+                                <input type="text" id="fbApiKey" value="AIzaSyCWa4ML6AawnUovcWlvmkDXwVoINErze9U" placeholder="AIzaSy..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">ID do Projeto</label>
+                                <input type="text" id="fbProjectId" value="doce-encanto-57bac" placeholder="doce-encanto-57bac" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Auth Domain</label>
+                                <input type="text" id="fbAuthDomain" value="doce-encanto-57bac.firebaseapp.com" placeholder="doce-encanto-57bac.firebaseapp.com" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">App ID Web</label>
+                                <input type="text" id="fbAppId" value="1:831003153784:web:01098bfcc669d4c002248d" placeholder="1:831003153784:web:ea7..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Número do Projeto (Sender ID)</label>
+                                <input type="text" id="fbSenderId" value="831003153784" placeholder="831003153784" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                            </div>
+
+                            <div class="sm:col-span-2 flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                                <button type="button" onclick="clearFirebaseSettings()" class="bg-rose-50 text-rose-600 hover:bg-rose-100 font-semibold py-2 px-4 rounded-xl text-xs transition-all">
+                                    Desconectar Nuvem
+                                </button>
+                                <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-5 rounded-xl text-sm shadow-sm transition-all">
+                                    Salvar & Conectar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal: Cadastro / Edição de Produtos -->
+    <div id="productModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 flex flex-col scale-95 transition-transform duration-300" id="productModalContent">
+            
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-rose-50/50">
+                <div>
+                    <h3 class="font-serif font-bold text-xl text-slate-800" id="productModalTitle">Cadastrar Produto</h3>
+                    <p class="text-xs text-slate-400">Configure custos de fabricação ou revenda de forma transparente.</p>
+                </div>
+                <button onclick="closeProductModal()" class="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-slate-200 hover:bg-rose-50 transition-all text-slate-500">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="productForm" onsubmit="submitProductForm(event)" class="p-6 space-y-6 flex-grow">
+                <input type="hidden" id="pId">
+
+                <!-- Seletor do Tipo de Produto -->
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Método de Fornecimento / Produção</label>
+                    <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-xl">
+                        <button type="button" id="type-revenda-btn" onclick="selectProductType('revenda')" class="py-2 px-3 rounded-lg text-sm font-semibold transition-all bg-white text-brand-700 shadow-sm">
+                            <i class="fa-solid fa-truck-ramp-box mr-1.5"></i> Revenda
+                        </button>
+                        <button type="button" id="type-producao-btn" onclick="selectProductType('producao')" class="py-2 px-3 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-800">
+                            <i class="fa-solid fa-mortar-pestle mr-1.5"></i> Fabricação Própria
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Campos de Nome e Estoque -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nome do Doce/Produto *</label>
+                        <input type="text" id="pNome" required placeholder="Ex: Bolo de Pote de Chocolate Belga" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Estoque Inicial (Unidades) *</label>
+                        <input type="number" id="pEstoque" required min="0" value="0" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Estoque Mínimo (Alerta) *</label>
+                        <input type="number" id="pEstoqueMin" required min="0" value="5" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Seção Custos: Revenda -->
+                <div id="cost-section-revenda" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Preço Pago na Compra (R$) *</label>
+                            <input type="number" step="0.01" id="pCustoCompra" min="0" value="0.00" oninput="calculateSimulatorPricing()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Embalagens & Custos Adicionais (R$)</label>
+                            <input type="number" step="0.01" id="pCustosAdicRev" min="0" value="0.00" oninput="calculateSimulatorPricing()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção Custos: Produção / Receita -->
+                <div id="cost-section-producao" class="space-y-4 hidden border border-rose-100 p-4 rounded-2xl bg-rose-50/20">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold uppercase text-slate-500">Receita & Insumos por Unidade de Produção</h4>
+                        <button type="button" onclick="addInsumoRow()" class="text-xs text-brand-600 hover:text-brand-700 font-bold flex items-center space-x-1">
+                            <i class="fa-solid fa-plus-circle"></i>
+                            <span>Adicionar Insumo</span>
+                        </button>
+                    </div>
+
+                    <div id="insumosListContainer" class="space-y-2">
+                        <!-- Gerado dinamicamente -->
+                    </div>
+
+                    <div class="border-t border-rose-100 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Embalagem individual e adicionais (R$)</label>
+                            <input type="number" step="0.01" id="pCustosAdicProd" min="0" value="0.00" oninput="calculateSimulatorPricing()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                        </div>
+                        <div class="flex items-end pb-1.5">
+                            <span class="text-xs text-slate-400 font-medium leading-tight">Os insumos adicionados acima são somados automaticamente ao custo total de fabricação da porção unitária.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulador em Tempo Real -->
+                <div class="border-t border-slate-100 pt-5 space-y-4 bg-slate-50 -mx-6 px-6 py-4">
+                    <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wide">Precificador & Margens em Tempo Real</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Preço de Venda Praticado (R$) *</label>
+                                <input type="number" step="0.01" id="pPrecoVenda" required min="0" value="0.00" oninput="calculateSimulatorPricing()" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-base font-bold text-brand-700 focus:ring-2 focus:ring-brand-400 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Indicadores de Lucratividade -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-center space-y-2 shadow-sm">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400 font-semibold">Custo Final Unitário:</span>
+                                <span id="simCustoFinal" class="font-bold text-slate-700">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400 font-semibold">Lucro Real Estimado:</span>
+                                <span id="simLucroNominal" class="font-bold text-slate-800">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-slate-400 font-semibold">Margem de Lucro Bruta:</span>
+                                <span id="simMargemLucro" class="font-black text-xl text-rose-500">0.0%</span>
+                            </div>
+                            <div id="simBadge" class="text-[10px] text-center font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 block uppercase tracking-wider">
+                                Simulador Ocioso
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controles do Modal -->
+                <div class="flex justify-end space-x-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeProductModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-2 px-4 rounded-xl text-sm transition-all">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-5 rounded-xl text-sm shadow-sm transition-all">
+                        Confirmar Cadastro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Customizado para Dialogos (Substitui Alertas Nativos para não quebrar a UI) -->
+    <div id="customDialog" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4 transform scale-95 transition-transform" id="customDialogContent">
+            <div class="flex items-center space-x-3 text-brand-600">
+                <div class="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-brand-600" id="dialogIcon">
+                    <i class="fa-solid fa-circle-info text-lg"></i>
+                </div>
+                <h3 class="font-serif font-bold text-lg text-slate-800" id="dialogTitle">Atenção</h3>
+            </div>
+            <p class="text-sm text-slate-500 leading-relaxed" id="dialogMessage">Aviso importante para o usuário.</p>
+            <div class="flex justify-end space-x-2 pt-2" id="dialogButtonsContainer">
+                <!-- Botões gerados dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 mt-auto text-xs text-center">
+        <p>© 2026 Doce Encanto Confeitaria. Todos os direitos reservados.</p>
+        <p class="mt-1 font-medium text-slate-600">Construído para rodar localmente ou em nuvem.</p>
+    </footer>
+
+    <!-- Scripts Principais & Sincronização de Dados -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        /* Vinculação de funções globais para ações do HTML */
+        window.switchTab = switchTab;
+        window.openProductModal = openProductModal;
+        window.closeProductModal = closeProductModal;
+        window.selectProductType = selectProductType;
+        window.addInsumoRow = addInsumoRow;
+        window.removeInsumoRow = removeInsumoRow;
+        window.calculateSimulatorPricing = calculateSimulatorPricing;
+        window.submitProductForm = submitProductForm;
+        window.editProduct = editProduct;
+        window.confirmDeleteProduct = confirmDeleteProduct;
+        window.quickStockChange = quickStockChange;
+        window.renderSalesProductGrid = renderSalesProductGrid;
+        window.addToCart = addToCart;
+        window.changeCartQty = changeCartQty;
+        window.removeFromCart = removeFromCart;
+        window.clearCart = clearCart;
+        window.recalculateCartTaxes = recalculateCartTaxes;
+        window.checkoutSale = checkoutSale;
+        window.confirmClearSalesHistory = confirmClearSalesHistory;
+        window.deleteSaleHistory = deleteSaleHistory;
+        window.exportDataBackup = exportDataBackup;
+        window.importDataBackup = importDataBackup;
+        window.saveFirebaseSettings = saveFirebaseSettings;
+        window.clearFirebaseSettings = clearFirebaseSettings;
+        window.testFirebaseConnection = testFirebaseConnection;
+
+        /* Estado da Aplicação */
+        let state = {
+            products: [],
+            sales: [],
+            cart: [],
+            firebaseConfig: null,
+            currentProductType: 'revenda'
+        };
+
+        /* Instâncias globais do Firebase */
+        let fbApp = null;
+        let fbAuth = null;
+        let fbDb = null;
+        let productsUnsubscribe = null;
+        let salesUnsubscribe = null;
+        let dbStatus = "offline";
+
+        /* Inicialização ao carregar a página */
+        window.addEventListener('load', () => {
+            // Verifica se o arquivo foi aberto localmente via protocolo file:// no celular
+            if (window.location.protocol === 'file:') {
+                document.getElementById('localFileWarning').classList.remove('hidden');
+            }
+
+            loadLocalSettingsAndData();
+            initFirebase();
+            renderAllViews();
+        });
+
+        /* Carregar dados locais (Fallback para quando estiver offline) */
+        function loadLocalSettingsAndData() {
+            // Chaves oficiais e fixas de produção obtidas para o Doce Encanto
+            const DEFAULT_CONFIG = {
+                apiKey: "AIzaSyCWa4ML6AawnUovcWlvmkDXwVoINErze9U",
+                projectId: "doce-encanto-57bac",
+                authDomain: "doce-encanto-57bac.firebaseapp.com",
+                messagingSenderId: "831003153784",
+                appId: "1:831003153784:web:01098bfcc669d4c002248d",
+                storageBucket: "doce-encanto-57bac.appspot.com"
+            };
+
+            const savedConfig = localStorage.getItem('doceencanto_firebase_config');
+            let configToUse = DEFAULT_CONFIG;
+
+            if (savedConfig) {
+                try {
+                    const parsed = JSON.parse(savedConfig);
+                    // SISTEMA DE AUTO-CURA DO CELULAR: Se detectar dados antigos ou incorretos (como o appId com ':android:')
+                    // força a limpeza do cache e carrega os novos parâmetros corretos de Web de forma imediata!
+                    if (!parsed.appId || parsed.appId.includes(':android:') || parsed.apiKey !== DEFAULT_CONFIG.apiKey || parsed.appId !== DEFAULT_CONFIG.appId) {
+                        configToUse = DEFAULT_CONFIG;
+                        localStorage.setItem('doceencanto_firebase_config', JSON.stringify(DEFAULT_CONFIG));
+                    } else {
+                        configToUse = parsed;
+                    }
+                } catch (e) {
+                    console.error("Erro ao carregar configurações de nuvem:", e);
+                    configToUse = DEFAULT_CONFIG;
+                }
+            } else {
+                localStorage.setItem('doceencanto_firebase_config', JSON.stringify(DEFAULT_CONFIG));
+            }
+
+            state.firebaseConfig = configToUse;
+
+            const savedState = localStorage.getItem('doceencanto_local_state');
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    state.products = parsed.products || [];
+                    state.sales = parsed.sales || [];
+                } catch (e) {
+                    console.error("Erro ao ler estado do armazenamento local:", e);
+                }
+            }
+        }
+
+        /* Salvar dados locais */
+        function saveLocalStateFallback() {
+            localStorage.setItem('doceencanto_local_state', JSON.stringify({
+                products: state.products,
+                sales: state.sales
+            }));
+        }
+
+        /* Inicialização da conexão em nuvem do Firebase */
+        function initFirebase() {
+            if (productsUnsubscribe) productsUnsubscribe();
+            if (salesUnsubscribe) salesUnsubscribe();
+
+            updateStatusBadge("connecting", "Conectando...");
+
+            if (!state.firebaseConfig || !state.firebaseConfig.apiKey || !state.firebaseConfig.apiKey.startsWith('AIzaSy')) {
+                dbStatus = "offline";
+                updateStatusBadge("offline", "Modo Local");
+                document.getElementById('firebaseStatusText').innerText = "Banco Local Ativo (Configuração incorreta ou vazia)";
+                document.getElementById('firebaseStatusText').className = "text-amber-600 font-semibold text-xs";
+                return;
+            }
+
+            try {
+                fbApp = initializeApp(state.firebaseConfig);
+                fbAuth = getAuth(fbApp);
+                fbDb = getFirestore(fbApp);
+
+                signInAnonymously(fbAuth).then(() => {
+                    dbStatus = "online";
+                    updateStatusBadge("online", "Nuvem Conectada");
+                    document.getElementById('firebaseStatusText').innerText = "Conexão de Nuvem Ativa!";
+                    document.getElementById('firebaseStatusText').className = "text-emerald-600 font-bold";
+
+                    setupRealTimeSync();
+                }).catch(err => {
+                    console.error("Erro na autenticação Firebase:", err);
+                    
+                    let errMsg = "Não foi possível autenticar na nuvem. Rodando em modo local.";
+                    if (err.code === 'auth/api-key-not-valid' || (err.message && err.message.includes('api-key-not-valid'))) {
+                        errMsg = "A API Key do Firebase configurada é inválida. Por favor, verifique suas configurações.";
+                    }
+                    
+                    dbStatus = "offline";
+                    updateStatusBadge("offline", "Falha de Conexão");
+                    document.getElementById('firebaseStatusText').innerText = "Banco de Dados Offline";
+                    document.getElementById('firebaseStatusText').className = "text-rose-600 font-semibold";
+                });
+            } catch (e) {
+                console.error("Erro ao iniciar Firebase:", e);
+                dbStatus = "offline";
+                updateStatusBadge("offline", "Erro de Inicialização");
+            }
+        }
+
+        /* Configura a escuta de coleções em tempo real */
+        function setupRealTimeSync() {
+            if (!fbDb) return;
+
+            productsUnsubscribe = onSnapshot(collection(fbDb, "doce_encanto_produtos"), (snapshot) => {
+                const list = [];
+                snapshot.forEach(doc => {
+                    list.push({ id: doc.id, ...doc.data() });
+                });
+                state.products = list;
+                saveLocalStateFallback();
+                renderAllViews();
+            }, (error) => {
+                console.error("Erro ao carregar produtos:", error);
+            });
+
+            salesUnsubscribe = onSnapshot(collection(fbDb, "doce_encanto_vendas"), (snapshot) => {
+                const list = [];
+                snapshot.forEach(doc => {
+                    list.push({ id: doc.id, ...doc.data() });
+                });
+                list.sort((a, b) => new Date(b.date) - new Date(a.date));
+                state.sales = list;
+                saveLocalStateFallback();
+                renderAllViews();
+            }, (error) => {
+                console.error("Erro ao carregar vendas:", error);
+            });
+        }
+
+        /* Funções de gravação e exclusão sincronizadas */
+        async function syncWriteElement(colName, id, data) {
+            saveLocalStateFallback();
+            if (dbStatus === "online" && fbDb) {
+                try {
+                    await setDoc(doc(fbDb, colName, id), data);
+                } catch (e) {
+                    console.error("Erro ao persistir na Nuvem:", e);
+                }
+            } else {
+                renderAllViews();
+            }
+        }
+
+        async function syncDeleteElement(colName, id) {
+            saveLocalStateFallback();
+            if (dbStatus === "online" && fbDb) {
+                try {
+                    await deleteDoc(doc(fbDb, colName, id));
+                } catch (e) {
+                    console.error("Erro ao apagar na Nuvem:", e);
+                }
+            } else {
+                renderAllViews();
+            }
+        }
+
+        /* Atualização do Status da Conexão */
+        function updateStatusBadge(status, text) {
+            const dot = document.getElementById('statusDot');
+            const txt = document.getElementById('statusText');
+            
+            if (status === "online") {
+                dot.className = "w-2.5 h-2.5 bg-emerald-500 rounded-full mr-2";
+                txt.innerText = text;
+            } else if (status === "connecting") {
+                dot.className = "w-2.5 h-2.5 bg-amber-500 rounded-full mr-2 animate-ping";
+                txt.innerText = text;
+            } else {
+                dot.className = "w-2.5 h-2.5 bg-slate-400 rounded-full mr-2";
+                txt.innerText = text;
+            }
+        }
+
+        /* Modal Dialog Customizado (Substitui Alertas/Confirmações Nativos) */
+        function showCustomDialog(title, message, buttons = []) {
+            const dialog = document.getElementById('customDialog');
+            const dTitle = document.getElementById('dialogTitle');
+            const dMessage = document.getElementById('dialogMessage');
+            const dContainer = document.getElementById('dialogButtonsContainer');
+
+            dTitle.innerText = title;
+            dMessage.innerText = message;
+            dContainer.innerHTML = '';
+
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.innerText = btn.text;
+                
+                let styleClass = "px-4 py-2 text-sm font-semibold rounded-xl transition-all ";
+                if (btn.style === "primary") {
+                    styleClass += "bg-brand-600 text-white hover:bg-brand-700 shadow-sm";
+                } else if (btn.style === "danger") {
+                    styleClass += "bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200";
+                } else {
+                    styleClass += "bg-slate-100 text-slate-600 hover:bg-slate-200";
+                }
+
+                button.className = styleClass;
+                button.onclick = () => {
+                    dialog.classList.add('hidden');
+                    if (btn.action) btn.action();
+                };
+                dContainer.appendChild(button);
+            });
+
+            dialog.classList.remove('hidden');
+        }
+
+        /* Alternador de Abas */
+        function switchTab(tabId) {
+            ['dashboard', 'vendas', 'produtos', 'historico', 'configuracoes'].forEach(t => {
+                document.getElementById(`content-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${t}`);
+                btn.className = "tab-btn px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-rose-50 transition-all flex items-center space-x-2";
+            });
+
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.className = "tab-btn px-4 py-2 rounded-xl text-sm font-medium text-brand-700 bg-white shadow-sm border border-rose-100 transition-all flex items-center space-x-2";
+
+            renderAllViews();
+        }
+
+        /* Renderizar Todas as Telas */
+        function renderAllViews() {
+            renderDashboardStats();
+            renderSalesProductGrid();
+            renderProductsList();
+            renderSalesHistory();
+            populateFirebaseSettingsForm();
+        }
+
+        /* Renderiza as Estatísticas do Painel Principal */
+        function renderDashboardStats() {
+            let totalBruto = 0;
+            let totalCustos = 0;
+            let totalLucro = 0;
+
+            state.sales.forEach(sale => {
+                totalBruto += sale.total;
+                totalCustos += sale.costs;
+                totalLucro += sale.profit;
+            });
+
+            const margemMedia = totalBruto > 0 ? (totalLucro / totalBruto) * 100 : 0;
+
+            document.getElementById('dashFaturamento').innerText = formatCurrency(totalBruto);
+            document.getElementById('dashCustos').innerText = formatCurrency(totalCustos);
+            document.getElementById('dashLucro').innerText = formatCurrency(totalLucro);
+            document.getElementById('dashMargem').innerText = `${margemMedia.toFixed(1)}%`;
+
+            /* Alertas de Estoque Mínimo */
+            const criticalProducts = state.products.filter(p => p.stock <= p.stockMin);
+            document.getElementById('criticalStockCount').innerText = `${criticalProducts.length} ${criticalProducts.length === 1 ? 'produto' : 'produtos'}`;
+
+            const criticalContainer = document.getElementById('criticalStockContainer');
+            criticalContainer.innerHTML = '';
+
+            if (criticalProducts.length === 0) {
+                criticalContainer.innerHTML = `<div class="py-4 text-center text-slate-400 text-xs">Nenhum produto com estoque crítico no momento! ✨</div>`;
+            } else {
+                criticalProducts.forEach(p => {
+                    const row = document.createElement('div');
+                    row.className = "py-2.5 flex items-center justify-between text-xs";
+                    row.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                            <span class="font-semibold text-slate-700">${p.name}</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-slate-400">Atual: <strong class="text-rose-600">${p.stock}</strong> (mín. ${p.stockMin})</span>
+                            <button onclick="quickStockChange('${p.id}', 10)" class="bg-rose-50 hover:bg-rose-100 text-brand-700 px-2 py-1 rounded-md font-bold">Apoiar +10</button>
+                        </div>
+                    `;
+                    criticalContainer.appendChild(row);
+                });
+            }
+
+            /* Tabela de Produtos Mais Vendidos */
+            const prodStats = {};
+            state.sales.forEach(sale => {
+                sale.items.forEach(item => {
+                    if (!prodStats[item.id]) {
+                        prodStats[item.id] = { name: item.name, quantity: 0, margin: item.margin };
+                    }
+                    prodStats[item.id].quantity += item.qty;
+                });
+            });
+
+            const topSelling = Object.values(prodStats).sort((a, b) => b.quantity - a.quantity).slice(0, 5);
+            const topSellingContainer = document.getElementById('topSellingContainer');
+            topSellingContainer.innerHTML = '';
+
+            if (topSelling.length === 0) {
+                topSellingContainer.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-slate-400 text-xs">Sem vendas realizadas.</td></tr>`;
+            } else {
+                topSelling.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-slate-50";
+                    tr.innerHTML = `
+                        <td class="py-2.5 px-2 font-medium text-slate-700">${item.name}</td>
+                        <td class="py-2.5 px-2 text-center font-bold text-slate-800">${item.quantity} un</td>
+                        <td class="py-2.5 px-2 text-right">
+                            <span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${getMarginBadgeClass(item.margin)}">
+                                ${item.margin.toFixed(1)}%
+                            </span>
+                        </td>
+                    `;
+                    topSellingContainer.appendChild(tr);
+                });
+            }
+        }
+
+        /* Renderização da listagem de produtos para registrar venda */
+        function renderSalesProductGrid() {
+            const grid = document.getElementById('salesProductGrid');
+            const searchVal = document.getElementById('salesSearchInput').value.toLowerCase();
+            const filterType = document.getElementById('salesFilterType').value;
+
+            grid.innerHTML = '';
+
+            const filtered = state.products.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(searchVal);
+                const matchesType = filterType === 'todos' || p.type === filterType;
+                return matchesSearch && matchesType;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 text-xs">Nenhum doce encontrado.</div>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                const isCritical = p.stock <= p.stockMin;
+                
+                card.className = `bg-white p-4 rounded-2xl border ${isCritical ? 'border-amber-100 hover:border-amber-300 bg-amber-50/10' : 'border-slate-100 hover:border-rose-100'} shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-between space-y-3`;
+                card.onclick = () => addToCart(p);
+
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase ${p.type === 'producao' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}">
+                                ${p.type === 'producao' ? 'Produção' : 'Revenda'}
+                            </span>
+                            <span class="text-[10px] font-bold ${isCritical ? 'text-amber-600' : 'text-slate-400'}">
+                                Est: ${p.stock}
+                            </span>
+                        </div>
+                        <h5 class="font-serif font-bold text-sm text-slate-700 leading-snug line-clamp-2">${p.name}</h5>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-base font-black text-brand-600">${formatCurrency(p.price)}</span>
+                        <div class="w-8 h-8 rounded-full bg-rose-50 hover:bg-brand-500 text-brand-600 hover:text-white flex items-center justify-center transition-all">
+                            <i class="fa-solid fa-cart-plus"></i>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        /* Funções de gerenciamento do Carrinho de Compras */
+        function addToCart(product) {
+            if (product.stock <= 0) {
+                showCustomDialog("Estoque Esgotado", `O produto "${product.name}" não possui unidades em estoque. Deseja vendê-lo mesmo assim? Isso deixará o estoque negativo.`, [
+                    { text: "Cancelar", style: "secondary" },
+                    { text: "Vender Mesmo Assim", style: "primary", action: () => proceedAddToCart(product) }
+                ]);
+                return;
+            }
+            proceedAddToCart(product);
+        }
+
+        function proceedAddToCart(product) {
+            const existing = state.cart.find(item => item.id === product.id);
+            if (existing) {
+                existing.qty++;
+            } else {
+                state.cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    cost: product.costTotal,
+                    qty: 1
+                });
+            }
+            recalculateCart();
+        }
+
+        function changeCartQty(id, delta) {
+            const item = state.cart.find(i => i.id === id);
+            if (!item) return;
+
+            item.qty += delta;
+            if (item.qty <= 0) {
+                removeFromCart(id);
+            } else {
+                recalculateCart();
+            }
+        }
+
+        function removeFromCart(id) {
+            state.cart = state.cart.filter(item => item.id !== id);
+            recalculateCart();
+        }
+
+        function clearCart() {
+            state.cart = [];
+            recalculateCart();
+        }
+
+        function recalculateCartTaxes() {
+            recalculateCart();
+        }
+
+        /* Recalcula valores do carrinho e margens */
+        function recalculateCart() {
+            const container = document.getElementById('cartItemsContainer');
+            container.innerHTML = '';
+
+            if (state.cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-400 space-y-2">
+                        <i class="fa-solid fa-basket-shopping text-3xl opacity-50 block"></i>
+                        <p class="text-sm">Selecione produtos ao lado para iniciar a venda.</p>
+                    </div>
+                `;
+                document.getElementById('cartTotalPayable').innerText = "R$ 0,00";
+                document.getElementById('cartTotalCost').innerText = "R$ 0,00";
+                document.getElementById('cartTotalProfit').innerText = "R$ 0,00";
+                document.getElementById('cartEstimatedMargin').innerText = "0.0%";
+                document.getElementById('cartEstimatedMargin').className = "text-slate-500 font-bold";
+                return;
+            }
+
+            let subtotalPrice = 0;
+            let subtotalCosts = 0;
+
+            state.cart.forEach(item => {
+                subtotalPrice += item.price * item.qty;
+                subtotalCosts += item.cost * item.qty;
+
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between border-b border-slate-100 pb-2 text-xs";
+                row.innerHTML = `
+                    <div class="space-y-0.5">
+                        <span class="font-semibold text-slate-700 block">${item.name}</span>
+                        <span class="text-[10px] text-slate-400">${formatCurrency(item.price)} cada</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-1 border border-slate-200 rounded-lg p-0.5 bg-slate-50">
+                            <button onclick="changeCartQty('${item.id}', -1)" class="w-6 h-6 rounded bg-white hover:bg-rose-50 flex items-center justify-center font-bold text-slate-600">-</button>
+                            <span class="px-2 font-bold text-slate-700">${item.qty}</span>
+                            <button onclick="changeCartQty('${item.id}', 1)" class="w-6 h-6 rounded bg-white hover:bg-rose-50 flex items-center justify-center font-bold text-slate-600">+</button>
+                        </div>
+                        <span class="font-bold text-slate-800 text-right w-16">${formatCurrency(item.price * item.qty)}</span>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            const paySelector = document.getElementById('cartPaymentMethod');
+            const taxPct = parseFloat(paySelector.options[paySelector.selectedIndex].dataset.tax) || 0;
+
+            const paymentFee = subtotalPrice * (taxPct / 100);
+            const totalRevenue = subtotalPrice;
+            const absoluteCost = subtotalCosts + paymentFee;
+            const liquidProfit = totalRevenue - absoluteCost;
+            const marginPct = totalRevenue > 0 ? (liquidProfit / totalRevenue) * 100 : 0;
+
+            document.getElementById('cartTotalPayable').innerText = formatCurrency(totalRevenue);
+            document.getElementById('cartTotalCost').innerText = formatCurrency(absoluteCost);
+            
+            const profitEl = document.getElementById('cartTotalProfit');
+            profitEl.innerText = formatCurrency(liquidProfit);
+            if (liquidProfit < 0) {
+                profitEl.className = "font-bold text-rose-600";
+            } else {
+                profitEl.className = "font-bold text-emerald-600";
+            }
+
+            const marginEl = document.getElementById('cartEstimatedMargin');
+            marginEl.innerText = `${marginPct.toFixed(1)}%`;
+            marginEl.className = `font-black text-xs px-2 py-0.5 rounded-md ${getMarginBadgeClass(marginPct)}`;
+        }
+
+        /* Fechamento e persistência da venda */
+        async function checkoutSale() {
+            if (state.cart.length === 0) return;
+
+            const paySelector = document.getElementById('cartPaymentMethod');
+            const taxPct = parseFloat(paySelector.options[paySelector.selectedIndex].dataset.tax) || 0;
+            const payMethod = paySelector.value;
+
+            let subtotalPrice = 0;
+            let subtotalCosts = 0;
+
+            state.cart.forEach(item => {
+                subtotalPrice += item.price * item.qty;
+                subtotalCosts += item.cost * item.qty;
+            });
+
+            const paymentFee = subtotalPrice * (taxPct / 100);
+            const totalRevenue = subtotalPrice;
+            const absoluteCost = subtotalCosts + paymentFee;
+            const liquidProfit = totalRevenue - absoluteCost;
+            const finalMargin = totalRevenue > 0 ? (liquidProfit / totalRevenue) * 100 : 0;
+
+            const saleId = "V-" + Date.now();
+            const saleData = {
+                id: saleId,
+                date: new Date().toISOString(),
+                paymentMethod: payMethod,
+                feePaid: paymentFee,
+                total: totalRevenue,
+                costs: absoluteCost,
+                profit: liquidProfit,
+                margin: finalMargin,
+                items: state.cart.map(i => ({
+                    id: i.id,
+                    name: i.name,
+                    price: i.price,
+                    cost: i.cost,
+                    qty: i.qty,
+                    margin: i.price > 0 ? ((i.price - i.cost) / i.price) * 100 : 0
+                }))
+            };
+
+            /* Dar baixa automática nos estoques locais e remotos */
+            state.cart.forEach(cartItem => {
+                const product = state.products.find(p => p.id === cartItem.id);
+                if (product) {
+                    product.stock = product.stock - cartItem.qty;
+                    syncWriteElement("doce_encanto_produtos", product.id, product);
+                }
+            });
+
+            await syncWriteElement("doce_encanto_vendas", saleId, saleData);
+
+            state.cart = [];
+            recalculateCart();
+            renderSalesProductGrid();
+
+            showCustomDialog("Venda Realizada!", "A venda foi computada com sucesso e a baixa no estoque foi processada.", [{ text: "Ok", style: "primary" }]);
+        }
+
+        /* Renderização da Tabela do Catálogo */
+        function renderProductsList() {
+            const tableBody = document.getElementById('productTableBody');
+            tableBody.innerHTML = '';
+
+            if (state.products.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-slate-400 text-xs">
+                            <i class="fa-solid fa-cookie text-3xl opacity-40 mb-2 block"></i>
+                            Nenhum produto cadastrado ainda. Clique em "Novo Produto" para começar.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            state.products.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b border-slate-100 font-medium text-xs";
+                
+                const isCritical = p.stock <= p.stockMin;
+
+                tr.innerHTML = `
+                    <td class="py-4 px-6">
+                        <div class="font-serif font-bold text-slate-800 text-sm">${p.name}</div>
+                    </td>
+                    <td class="py-4 px-4 text-center">
+                        <span class="px-2 py-0.5 rounded-full font-bold uppercase text-[9px] ${p.type === 'producao' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}">
+                            ${p.type === 'producao' ? 'Fabricação' : 'Revenda'}
+                        </span>
+                    </td>
+                    <td class="py-4 px-4 text-right">
+                        <div class="flex items-center justify-end space-x-1.5">
+                            <button onclick="quickStockChange('${p.id}', -1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold">-</button>
+                            <span class="${isCritical ? 'text-amber-600 font-bold' : 'text-slate-700 font-bold'}">${p.stock} un</span>
+                            <button onclick="quickStockChange('${p.id}', 1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold">+</button>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4 text-right text-slate-500 font-semibold">${formatCurrency(p.costTotal)}</td>
+                    <td class="py-4 px-4 text-right text-brand-600 font-bold">${formatCurrency(p.price)}</td>
+                    <td class="py-4 px-4 text-center">
+                        <span class="px-2.5 py-0.5 rounded-full font-bold text-[10px] ${getMarginBadgeClass(p.margin)}">
+                            ${p.margin.toFixed(1)}%
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <div class="flex items-center justify-center space-x-2">
+                            <button onclick="editProduct('${p.id}')" class="text-slate-500 hover:text-brand-600 border border-slate-200 hover:border-brand-200 px-2 py-1 rounded-lg bg-white transition-all">
+                                <i class="fa-solid fa-pen-to-square"></i> Editar
+                            </button>
+                            <button onclick="confirmDeleteProduct('${p.id}')" class="text-rose-500 hover:text-rose-700 border border-slate-200 hover:border-rose-200 px-2 py-1 rounded-lg bg-white transition-all">
+                                <i class="fa-solid fa-trash"></i> Excluir
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        /* Mudança rápida de estoque direto na tabela */
+        async function quickStockChange(id, delta) {
+            const product = state.products.find(p => p.id === id);
+            if (!product) return;
+
+            product.stock = Math.max(0, parseInt(product.stock) + delta);
+            await syncWriteElement("doce_encanto_produtos", product.id, product);
+        }
+
+        /* Configurações básicas do Modal de Produtos */
+        function openProductModal() {
+            document.getElementById('productForm').reset();
+            document.getElementById('pId').value = '';
+            document.getElementById('insumosListContainer').innerHTML = '';
+            
+            selectProductType('revenda');
+            
+            document.getElementById('productModalTitle').innerText = "Cadastrar Novo Produto";
+            document.getElementById('productModal').classList.remove('hidden');
+            
+            calculateSimulatorPricing();
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.add('hidden');
+        }
+
+        function selectProductType(type) {
+            state.currentProductType = type;
+            const revBtn = document.getElementById('type-revenda-btn');
+            const prodBtn = document.getElementById('type-producao-btn');
+            
+            const costRev = document.getElementById('cost-section-revenda');
+            const costProd = document.getElementById('cost-section-producao');
+
+            if (type === 'revenda') {
+                revBtn.className = "py-2 px-3 rounded-lg text-sm font-semibold transition-all bg-white text-brand-700 shadow-sm";
+                prodBtn.className = "py-2 px-3 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-800";
+                costRev.classList.remove('hidden');
+                costProd.classList.add('hidden');
+            } else {
+                prodBtn.className = "py-2 px-3 rounded-lg text-sm font-semibold transition-all bg-white text-brand-700 shadow-sm";
+                revBtn.className = "py-2 px-3 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-800";
+                costProd.classList.remove('hidden');
+                costRev.classList.add('hidden');
+
+                const container = document.getElementById('insumosListContainer');
+                if (container.children.length === 0) {
+                    addInsumoRow();
+                }
+            }
+            calculateSimulatorPricing();
+        }
+
+        /* Adicionar linha para insumo (Fabricação própria) */
+        function addInsumoRow(nome = '', qty = '', pacoteCusto = '', pacoteQty = '') {
+            const container = document.getElementById('insumosListContainer');
+            const index = Date.now() + Math.random().toString(36).substr(2, 5);
+
+            const row = document.createElement('div');
+            row.className = "grid grid-cols-12 gap-2 bg-white border border-slate-200 p-2.5 rounded-xl text-xs flex items-center shadow-sm relative insumo-row";
+            row.id = `insumo-${index}`;
+
+            row.innerHTML = `
+                <div class="col-span-4 space-y-0.5">
+                    <label class="text-[9px] uppercase font-bold text-slate-400">Insumo</label>
+                    <input type="text" placeholder="Leite condensado" value="${nome}" required class="insumo-nome w-full px-2 py-1 bg-slate-50 rounded-md border border-slate-200 focus:outline-none">
+                </div>
+                <div class="col-span-2 space-y-0.5">
+                    <label class="text-[9px] uppercase font-bold text-slate-400">Preço Pacote</label>
+                    <input type="number" step="0.01" placeholder="R$" value="${pacoteCusto}" oninput="calculateSimulatorPricing()" required class="insumo-pacote-custo w-full px-2 py-1 bg-slate-50 rounded-md border border-slate-200 focus:outline-none">
+                </div>
+                <div class="col-span-2 space-y-0.5">
+                    <label class="text-[9px] uppercase font-bold text-slate-400">Tam. Pacote</label>
+                    <input type="number" placeholder="ex: 395" value="${pacoteQty}" oninput="calculateSimulatorPricing()" required class="insumo-pacote-qty w-full px-2 py-1 bg-slate-50 rounded-md border border-slate-200 focus:outline-none">
+                </div>
+                <div class="col-span-2 space-y-0.5">
+                    <label class="text-[9px] uppercase font-bold text-slate-400">Uso Doce</label>
+                    <input type="number" placeholder="ex: 100" value="${qty}" oninput="calculateSimulatorPricing()" required class="insumo-uso-qty w-full px-2 py-1 bg-slate-50 rounded-md border border-slate-200 focus:outline-none">
+                </div>
+                <div class="col-span-2 flex justify-end items-end h-full pt-4">
+                    <button type="button" onclick="removeInsumoRow('${index}')" class="w-8 h-8 rounded-lg text-rose-500 bg-rose-50 hover:bg-rose-100 flex items-center justify-center transition-all">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeInsumoRow(id) {
+            const row = document.getElementById(`insumo-${id}`);
+            if (row) {
+                row.remove();
+            }
+            calculateSimulatorPricing();
+        }
+
+        /* Cálculo dinâmico do precificador em tempo real */
+        function calculateSimulatorPricing() {
+            let finalCusto = 0;
+
+            if (state.currentProductType === 'revenda') {
+                const custoCompra = parseFloat(document.getElementById('pCustoCompra').value) || 0;
+                const custoAdicional = parseFloat(document.getElementById('pCustosAdicRev').value) || 0;
+                finalCusto = custoCompra + custoAdicional;
+            } else {
+                const rows = document.querySelectorAll('.insumo-row');
+                rows.forEach(row => {
+                    const pacoteCusto = parseFloat(row.querySelector('.insumo-pacote-custo').value) || 0;
+                    const pacoteQty = parseFloat(row.querySelector('.insumo-pacote-qty').value) || 0;
+                    const usoQty = parseFloat(row.querySelector('.insumo-uso-qty').value) || 0;
+
+                    if (pacoteQty > 0) {
+                        const unitCost = (pacoteCusto / pacoteQty) * usoQty;
+                        finalCusto += unitCost;
+                    }
+                });
+
+                const custoAdicional = parseFloat(document.getElementById('pCustosAdicProd').value) || 0;
+                finalCusto += custoAdicional;
+            }
+
+            const precoVenda = parseFloat(document.getElementById('pPrecoVenda').value) || 0;
+            const lucroNominal = precoVenda - finalCusto;
+            const margemLucro = precoVenda > 0 ? (lucroNominal / precoVenda) * 100 : 0;
+
+            document.getElementById('simCustoFinal').innerText = formatCurrency(finalCusto);
+            document.getElementById('simLucroNominal').innerText = formatCurrency(lucroNominal);
+            
+            const marginEl = document.getElementById('simMargemLucro');
+            const marginPctVal = margemLucro.toFixed(1);
+            marginEl.innerText = `${marginPctVal}%`;
+
+            const badge = document.getElementById('simBadge');
+            
+            if (precoVenda === 0) {
+                badge.className = "text-[10px] text-center font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 block uppercase tracking-wider";
+                badge.innerText = "Simulador Ocioso";
+                marginEl.className = "font-black text-xl text-slate-400";
+            } else if (lucroNominal < 0) {
+                badge.className = "text-[10px] text-center font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-600 block uppercase tracking-wider animate-pulse";
+                badge.innerText = "PREJUÍZO DETECTADO";
+                marginEl.className = "font-black text-xl text-rose-600";
+            } else if (margemLucro < 20) {
+                badge.className = "text-[10px] text-center font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 block uppercase tracking-wider";
+                badge.innerText = "Margem Alerta (Baixa)";
+                marginEl.className = "font-black text-xl text-amber-500";
+            } else if (margemLucro < 40) {
+                badge.className = "text-[10px] text-center font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 block uppercase tracking-wider";
+                badge.innerText = "Lucratividade Adequada";
+                marginEl.className = "font-black text-xl text-indigo-500";
+            } else {
+                badge.className = "text-[10px] text-center font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 block uppercase tracking-wider";
+                badge.innerText = "Excelente Lucratividade!";
+                marginEl.className = "font-black text-xl text-emerald-600";
+            }
+        }
+
+        /* Submissão do formulário do Produto */
+        async function submitProductForm(event) {
+            event.preventDefault();
+
+            const pId = document.getElementById('pId').value || "P-" + Date.now();
+            const name = document.getElementById('pNome').value;
+            const stock = parseInt(document.getElementById('pEstoque').value) || 0;
+            const stockMin = parseInt(document.getElementById('pEstoqueMin').value) || 0;
+            const precoVenda = parseFloat(document.getElementById('pPrecoVenda').value) || 0;
+
+            let costBase = 0;
+            let costAdic = 0;
+            const insumos = [];
+
+            if (state.currentProductType === 'revenda') {
+                costBase = parseFloat(document.getElementById('pCustoCompra').value) || 0;
+                costAdic = parseFloat(document.getElementById('pCustosAdicRev').value) || 0;
+            } else {
+                const rows = document.querySelectorAll('.insumo-row');
+                rows.forEach(row => {
+                    const nomeInsumo = row.querySelector('.insumo-nome').value;
+                    const pacoteCusto = parseFloat(row.querySelector('.insumo-pacote-custo').value) || 0;
+                    const pacoteQty = parseFloat(row.querySelector('.insumo-pacote-qty').value) || 0;
+                    const usoQty = parseFloat(row.querySelector('.insumo-uso-qty').value) || 0;
+
+                    if (pacoteQty > 0) {
+                        const calculatedUnitCost = (pacoteCusto / pacoteQty) * usoQty;
+                        costBase += calculatedUnitCost;
+                        
+                        insumos.push({
+                            nome: nomeInsumo,
+                            pacoteCusto,
+                            pacoteQty,
+                            usoQty,
+                            unitCost: calculatedUnitCost
+                        });
+                    }
+                });
+                costAdic = parseFloat(document.getElementById('pCustosAdicProd').value) || 0;
+            }
+
+            const costTotal = costBase + costAdic;
+            const profitNominal = precoVenda - costTotal;
+            const margin = precoVenda > 0 ? (profitNominal / precoVenda) * 100 : 0;
+
+            const product = {
+                id: pId,
+                name,
+                type: state.currentProductType,
+                stock,
+                stockMin,
+                costBase,
+                costAdic,
+                costTotal,
+                price: precoVenda,
+                margin,
+                insumos
+            };
+
+            await syncWriteElement("doce_encanto_produtos", pId, product);
+            closeProductModal();
+            showCustomDialog("Catálogo Atualizado", `O produto "${name}" foi salvo com sucesso.`, [{ text: "Ok", style: "primary" }]);
+        }
+
+        /* Edição de Produto cadastrado */
+        function editProduct(id) {
+            const p = state.products.find(item => item.id === id);
+            if (!p) return;
+
+            openProductModal();
+
+            document.getElementById('pId').value = p.id;
+            document.getElementById('pNome').value = p.name;
+            document.getElementById('pEstoque').value = p.stock;
+            document.getElementById('pEstoqueMin').value = p.stockMin;
+            document.getElementById('pPrecoVenda').value = p.price;
+
+            selectProductType(p.type);
+
+            if (p.type === 'revenda') {
+                document.getElementById('pCustoCompra').value = p.costBase;
+                document.getElementById('pCustosAdicRev').value = p.costAdic;
+            } else {
+                document.getElementById('pCustosAdicProd').value = p.costAdic;
+                
+                const container = document.getElementById('insumosListContainer');
+                container.innerHTML = '';
+
+                if (p.insumos && p.insumos.length > 0) {
+                    p.insumos.forEach(i => {
+                        addInsumoRow(i.nome, i.usoQty, i.pacoteCusto, i.pacoteQty);
+                    });
+                } else {
+                    addInsumoRow();
+                }
+            }
+
+            document.getElementById('productModalTitle').innerText = "Editar Produto";
+            calculateSimulatorPricing();
+        }
+
+        function confirmDeleteProduct(id) {
+            const p = state.products.find(item => item.id === id);
+            if (!p) return;
+
+            showCustomDialog("Excluir Produto", `Você tem certeza que quer excluir "${p.name}"? Esta ação não pode ser desfeita.`, [
+                { text: "Cancelar", style: "secondary" },
+                { text: "Excluir", style: "danger", action: () => deleteProduct(id) }
+            ]);
+        }
+
+        async function deleteProduct(id) {
+            await syncDeleteElement("doce_encanto_produtos", id);
+        }
+
+        /* Renderiza o Histórico de Vendas Concluídas */
+        function renderSalesHistory() {
+            const container = document.getElementById('salesHistoryContainer');
+            container.innerHTML = '';
+
+            if (state.sales.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-slate-400">
+                        <i class="fa-solid fa-receipt text-3xl opacity-40 mb-2 block"></i>
+                        Nenhuma venda realizada. Comece no caixa "Registrar Venda".
+                    </div>
+                `;
+                return;
+            }
+
+            state.sales.forEach(sale => {
+                const saleCard = document.createElement('div');
+                saleCard.className = "border-b border-slate-100 p-4 hover:bg-slate-50/50 transition-all text-xs";
+                
+                const formattedDate = new Date(sale.date).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                let itemsListHtml = '';
+                sale.items.forEach(item => {
+                    itemsListHtml += `
+                        <div class="flex justify-between py-1 border-b border-dashed border-slate-100 last:border-0 text-slate-500">
+                            <span>${item.qty}x ${item.name}</span>
+                            <span>${formatCurrency(item.price * item.qty)}</span>
+                        </div>
+                    `;
+                });
+
+                saleCard.innerHTML = `
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-slate-800">${sale.id}</span>
+                                <span class="text-slate-400 font-medium">${formattedDate}</span>
+                            </div>
+                            <div class="flex items-center space-x-1.5">
+                                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold uppercase text-[9px]">
+                                    ${sale.paymentMethod}
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-semibold">Taxa paga: ${formatCurrency(sale.feePaid)}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <div class="text-sm font-black text-brand-600">${formatCurrency(sale.total)}</div>
+                                <div class="text-[10px] text-emerald-600 font-bold">Lucro: +${formatCurrency(sale.profit)}</div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${getMarginBadgeClass(sale.margin)}">
+                                    ${sale.margin.toFixed(1)}%
+                                </span>
+                                <button onclick="deleteSaleHistory('${sale.id}')" class="text-rose-500 hover:text-rose-700 w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 flex items-center justify-center transition-all" title="Devolver venda e restaurar estoque">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 bg-slate-50 rounded-xl p-3 border border-slate-100 max-w-xl">
+                        <div class="text-[9px] uppercase font-bold text-slate-400 mb-1.5">Itens Pedidos</div>
+                        ${itemsListHtml}
+                    </div>
+                `;
+                container.appendChild(saleCard);
+            });
+        }
+
+        /* Estornar registro de venda de forma segura */
+        function deleteSaleHistory(saleId) {
+            showCustomDialog("Devolver Venda?", "Isto apagará o registro de venda e devolverá os itens correspondentes ao estoque.", [
+                { text: "Cancelar", style: "secondary" },
+                { text: "Confirmar Estorno", style: "danger", action: () => proceedDeleteSale(saleId) }
+            ]);
+        }
+
+        async function proceedDeleteSale(saleId) {
+            const sale = state.sales.find(s => s.id === saleId);
+            if (!sale) return;
+
+            /* Retornar produtos para o estoque */
+            sale.items.forEach(soldItem => {
+                const product = state.products.find(p => p.id === soldItem.id);
+                if (product) {
+                    product.stock = parseInt(product.stock) + parseInt(soldItem.qty);
+                    syncWriteElement("doce_encanto_produtos", product.id, product);
+                }
+            });
+
+            await syncDeleteElement("doce_encanto_vendas", saleId);
+        }
+
+        function confirmClearSalesHistory() {
+            showCustomDialog("Excluir Histórico Completo", "Você perderá todos os relatórios e registros de faturamento atuais. Tem certeza?", [
+                { text: "Cancelar", style: "secondary" },
+                { text: "Zerar Histórico", style: "danger", action: () => clearSalesHistory() }
+            ]);
+        }
+
+        async function clearSalesHistory() {
+            if (dbStatus === "online" && fbDb) {
+                state.sales.forEach(async (sale) => {
+                    await syncDeleteElement("doce_encanto_vendas", sale.id);
+                });
+            } else {
+                state.sales = [];
+                saveLocalStateFallback();
+                renderAllViews();
+            }
+        }
+
+        /* Configurações Firebase na aba correspondente */
+        function populateFirebaseSettingsForm() {
+            if (state.firebaseConfig) {
+                document.getElementById('fbApiKey').value = state.firebaseConfig.apiKey || '';
+                document.getElementById('fbProjectId').value = state.firebaseConfig.projectId || '';
+                document.getElementById('fbAuthDomain').value = state.firebaseConfig.authDomain || '';
+                document.getElementById('fbAppId').value = state.firebaseConfig.appId || '';
+                document.getElementById('fbSenderId').value = state.firebaseConfig.messagingSenderId || '';
+            }
+        }
+
+        async function saveFirebaseSettings(event) {
+            event.preventDefault();
+
+            const apiKey = document.getElementById('fbApiKey').value.trim();
+            
+            if (apiKey && !apiKey.startsWith('AIzaSy')) {
+                showCustomDialog(
+                    "Chave Suspeita!", 
+                    "Atenção: As chaves de API do Firebase começam obrigatoriamente com 'AIzaSy'. A chave digitada não segue esse padrão e causará erros de conexão.\n\nDeseja salvar mesmo assim ou prefere corrigir?", 
+                    [
+                        { text: "Voltar e Corrigir", style: "secondary" },
+                        { text: "Salvar assim mesmo", style: "danger", action: () => proceedSaveFirebaseSettings() }
+                    ]
+                );
+                return;
+            }
+
+            proceedSaveFirebaseSettings();
+        }
+
+        function proceedSaveFirebaseSettings() {
+            const config = {
+                apiKey: document.getElementById('fbApiKey').value.trim(),
+                projectId: document.getElementById('fbProjectId').value.trim(),
+                authDomain: document.getElementById('fbAuthDomain').value.trim(),
+                appId: document.getElementById('fbAppId').value.trim(),
+                messagingSenderId: document.getElementById('fbSenderId').value.trim(),
+                storageBucket: `${document.getElementById('fbProjectId').value.trim()}.appspot.com`
+            };
+
+            state.firebaseConfig = config;
+            localStorage.setItem('doceencanto_firebase_config', JSON.stringify(config));
+
+            initFirebase();
+            showCustomDialog("Configuração Salva", "Os parâmetros foram salvos localmente. O sistema tentará se sincronizar automaticamente.", [{ text: "Ok", style: "primary" }]);
+        }
+
+        function clearFirebaseSettings() {
+            state.firebaseConfig = null;
+            localStorage.removeItem('doceencanto_firebase_config');
+            
+            document.getElementById('fbApiKey').value = 'AIzaSyCWa4ML6AawnUovcWlvmkDXwVoINErze9U';
+            document.getElementById('fbProjectId').value = 'doce-encanto-57bac';
+            document.getElementById('fbAuthDomain').value = 'doce-encanto-57bac.firebaseapp.com';
+            document.getElementById('fbAppId').value = '1:831003153784:web:01098bfcc669d4c002248d';
+            document.getElementById('fbSenderId').value = '831003153784';
+
+            initFirebase();
+            showCustomDialog("Restaurado", "O aplicativo foi redefinido para as credenciais padrão do Doce Encanto.", [{ text: "Ok", style: "primary" }]);
+        }
+
+        function testFirebaseConnection() {
+            initFirebase();
+            setTimeout(() => {
+                if (dbStatus === "online") {
+                    showCustomDialog("Conexão OK!", "A comunicação com seu Firestore em nuvem está funcionando perfeitamente em tempo real!", [{ text: "Excelente", style: "primary" }]);
+                } else {
+                    showCustomDialog("Falha de Conexão", "Não foi possível conectar. Verifique se as chaves e permissões do banco estão ativas.", [{ text: "Ok", style: "secondary" }]);
+                }
+            }, 1500);
+        }
+
+        /* Funções de Importar / Exportar Backup */
+        function exportDataBackup() {
+            const backupData = JSON.stringify({
+                products: state.products,
+                sales: state.sales
+            }, null, 2);
+
+            const blob = new Blob([backupData], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `DoceEncanto_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importDataBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.products || data.sales) {
+                        state.products = data.products || [];
+                        state.sales = data.sales || [];
+                        
+                        saveLocalStateFallback();
+
+                        if (dbStatus === "online" && fbDb) {
+                            state.products.forEach(async (p) => {
+                                await syncWriteElement("doce_encanto_produtos", p.id, p);
+                            });
+                            state.sales.forEach(async (s) => {
+                                await syncWriteElement("doce_encanto_vendas", s.id, s);
+                            });
+                        }
+
+                        renderAllViews();
+                        showCustomDialog("Backup Importado", "Dados restaurados com sucesso!", [{ text: "Ótimo", style: "primary" }]);
+                    } else {
+                        showCustomDialog("Arquivo Inválido", "O arquivo não parece ser um backup legítimo do Doce Encanto.", [{ text: "Ok", style: "secondary" }]);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showCustomDialog("Erro de Leitura", "Não foi possível carregar os dados deste arquivo de backup.", [{ text: "Ok", style: "secondary" }]);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        /* Auxiliares de Formatação Visual */
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        }
+
+        function getMarginBadgeClass(margin) {
+            if (margin < 0) return "bg-rose-100 text-rose-700 border border-rose-200";
+            if (margin < 20) return "bg-amber-100 text-amber-800 border border-amber-200";
+            if (margin < 40) return "bg-indigo-100 text-indigo-700 border border-indigo-200";
+            return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+        }
+    </script>
+</body>
+</html>
